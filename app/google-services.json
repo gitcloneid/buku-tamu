@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "790309136878",
+    "project_id": "notif-android-515a4",
+    "storage_bucket": "notif-android-515a4.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:790309136878:android:d12729c11a1e7b5dd8c6ff",
+        "android_client_info": {
+          "package_name": "com.hv.bukutm"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCyQGAadOcIj8oBG7EbsV4u_CWJH6PeUMo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
