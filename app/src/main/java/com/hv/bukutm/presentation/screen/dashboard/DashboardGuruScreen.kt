@@ -288,13 +288,18 @@ fun AppointmentCard(appointment: Appointment) {
                     fontSize = 14.sp,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                 )
+                val statusText = when (appointment.status) {
+                    "Telat" -> "Terlambat"
+                    else -> appointment.status
+                }
                 Text(
-                    text = appointment.status,
-                    fontSize = 17.sp,
-                    fontWeight = FontWeight.Medium,
+                    text = statusText,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
                     color = when (appointment.status) {
-                        "Menunggu" -> Color(0xFFFF9800) // Amber
-                        "Selesai" -> Color(0xFF016033) // Green
+                        "Menunggu" -> Color(0xFF00729F) //rev
+                        "Selesai" -> Color(0xFF148E00)
+                        "Telat" -> Color(0xFFD50000)
                         else -> MaterialTheme.colorScheme.onSurface
                     }
                 )

@@ -65,6 +65,7 @@ android {
             exclude(group = "xpp3", module = "xpp3")
         }
 
+        implementation ("androidx.compose.material:material-icons-extended")
         implementation ("androidx.compose.animation:animation:1.5.0")
         implementation ("androidx.compose.ui:ui:1.5.0")
 

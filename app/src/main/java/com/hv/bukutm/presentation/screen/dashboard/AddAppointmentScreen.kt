@@ -78,8 +78,9 @@ fun AddAppointmentScreen(
     val showTimePicker by viewModel.showTimePicker.collectAsState()
     val dateDialogError by viewModel.dateDialogError.collectAsState()
     val timeDialogError by viewModel.timeDialogError.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
 
-    // Check if selected date is today
+    // check user select this day
     val isSelectedDateToday = remember(uiState.date) {
         if (uiState.date.isNotBlank()) {
             try {
@@ -93,13 +94,10 @@ fun AddAppointmentScreen(
         }
     }
 
-    // Check if date is selected
     val isDateSelected = uiState.date.isNotBlank()
 
-    // Get current time
     val currentTime = remember { LocalTime.now() }
 
-    // Enhanced logic for time field availability
     val isTimeFieldAvailable = remember(uiState.date, currentTime) {
         when {
             !isDateSelected -> false
@@ -142,17 +140,23 @@ fun AddAppointmentScreen(
         }
     }
 
+    //snackbar
+    LaunchedEffect(uiState.snackbarMessage) {
+        uiState.snackbarMessage?.let { message ->
+            snackbarHostState.showSnackbar(
+                message = message,
+                duration = SnackbarDuration.Short
+            )
+            viewModel.clearSnackbarMessage()
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
                     Text(
                         "Buat Janji Temu",
-                        style = MaterialTheme.typography.headlineSmall.copy(
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 22.sp
-                        ),
-                        color = MaterialTheme.colorScheme.primary
                     )
                 },
                 navigationIcon = {
@@ -160,17 +164,28 @@ fun AddAppointmentScreen(
                         Icon(
                             imageVector = Icons.Default.ArrowBack,
                             contentDescription = "Kembali",
-                            tint = MaterialTheme.colorScheme.primary
                         )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    titleContentColor = MaterialTheme.colorScheme.primary,
-                    navigationIconContentColor = MaterialTheme.colorScheme.primary
-                ),
-                modifier = Modifier.shadow(4.dp)
             )
+        },
+        snackbarHost = {
+            SnackbarHost(
+                hostState = snackbarHostState,
+                modifier = Modifier
+                    .padding(16.dp)
+                    .fillMaxWidth()
+            ) { data ->
+                Snackbar(
+                    snackbarData = data,
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .wrapContentHeight()
+                )
+            }
         },
         contentWindowInsets = WindowInsets(0, 0, 0, 0)
     ) { innerPadding ->
@@ -317,31 +332,6 @@ fun AddAppointmentScreen(
                             else
                                 MaterialTheme.colorScheme.outline.copy(alpha = 0.38f)
                         ),
-                        isError = uiState.timeError != null,
-                        supportingText = {
-                            when {
-                                !isDateSelected -> Text(
-                                    "Pilih tanggal terlebih dahulu",
-                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                                    style = MaterialTheme.typography.bodySmall
-                                )
-                                isSelectedDateToday && currentTime.hour >= 14 -> Text(
-                                    "Waktu sudah tidak tersedia untuk hari ini (lewat jam 14:00)",
-                                    color = MaterialTheme.colorScheme.error,
-                                    style = MaterialTheme.typography.bodySmall
-                                )
-                                isSelectedDateToday && !isTimeFieldAvailable -> Text(
-                                    "Tidak ada waktu yang tersedia pada hari ini",
-                                    color = MaterialTheme.colorScheme.error,
-                                    style = MaterialTheme.typography.bodySmall
-                                )
-                                uiState.timeError != null -> Text(
-                                    uiState.timeError!!,
-                                    color = MaterialTheme.colorScheme.error,
-                                    style = MaterialTheme.typography.bodySmall
-                                )
-                            }
-                        }
                     )
 
                     OutlinedTextField(

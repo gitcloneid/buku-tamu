@@ -58,7 +58,7 @@ class LoginViewModel @Inject constructor(
                             "Email atau Password Salah"
                         }
                         else -> {
-                            "Email atau Password Salah"
+                            "Error: Server Unreachable"
                         }
                     }
                     _uiState.value = LoginUiState(error = errorMessage)

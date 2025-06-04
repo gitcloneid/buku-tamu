@@ -261,21 +261,18 @@ private fun MonthlyReportContent(report: MonthlyReport) {
 
 @Composable
 private fun CustomBarChart(weeklyStats: List<WeeklyStats>) {
-// Warna Teal yang lembut untuk total keseluruhan
-    val totalColor = Color(0xFF4DB6AC)
+    val totalColor = Color(0xFF00729F)
 
-// Warna Coral yang hangat untuk bagian yang selesai
-    val completedColor = Color(0xFFFF7043)
-
-    // Cari nilai data tertinggi untuk skala chart
+    val completedColor = Color(0xFF148E00)
+    //cari nilai tertinggi chart
     val maxStatValue = weeklyStats.maxOfOrNull { it.total }?.toFloat() ?: 1f
 
-    // Bulatkan nilai tertinggi ke atas (misal: 23 -> 30) untuk membuat skala Y yang rapi
+    // buat agar keatas y set
     val yAxisMax = (ceil(maxStatValue / 10) * 10).toInt()
 
     Column(modifier = Modifier.fillMaxWidth()) {
         Row(modifier = Modifier.fillMaxWidth().height(200.dp)) {
-            // Sumbu Y (Label Kiri)
+            //sumbu kiri
             Column(
                 modifier = Modifier
                     .fillMaxHeight()
@@ -288,10 +285,9 @@ private fun CustomBarChart(weeklyStats: List<WeeklyStats>) {
                 Text(text = "0", style = MaterialTheme.typography.labelSmall)
             }
 
-            // Garis pembatas
+
             Divider(modifier = Modifier.fillMaxHeight().width(1.dp))
 
-            // Bar Chart
             Row(
                 modifier = Modifier
                     .fillMaxSize()
@@ -311,10 +307,7 @@ private fun CustomBarChart(weeklyStats: List<WeeklyStats>) {
                 }
             }
         }
-        // Garis pembatas Sumbu X
         Divider(modifier = Modifier.fillMaxWidth().padding(start = 40.dp))
-
-        // Legend
         Spacer(modifier = Modifier.height(16.dp))
         Row(
             modifier = Modifier.fillMaxWidth(),

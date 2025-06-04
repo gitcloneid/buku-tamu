@@ -24,6 +24,8 @@ object NetworkModule {
 
     //http://192.168.1.80:3001/
     //http://192.168.1.80:5000/
+    //https://wa-service.clowlaw.my.id/
+    //https://api-sub.clowlaw.my.id/
     @Provides
     @Singleton
     fun provideOkHttpClient(): OkHttpClient {

@@ -24,5 +24,12 @@ interface AppointmentRepository {
         limit: Int = 1000000000
     ): Result<List<Appointment>>
     suspend fun getAppointmentByQr(token: String, kodeQr: String): Result<Appointment>
+    suspend fun getTamuByQr(token: String? = null, kodeQr: String): Result<Appointment>
     suspend fun updateAppointmentStatus(token: String, id: Int, status: String): Result<Appointment>
+    suspend fun rescheduleAppointment(
+        token: String,
+        id: Int,
+        tanggal: String,
+        waktu: String
+    ): Result<Appointment>
 }

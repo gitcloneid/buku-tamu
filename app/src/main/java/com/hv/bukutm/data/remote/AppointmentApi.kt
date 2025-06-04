@@ -57,7 +57,24 @@ interface AppointmentApi {
         @Path("id") id: Int,
         @Body status: String
     ): Appointment
+
+    @GET("api/tamu/qr/{kodeQr}")
+    suspend fun getTamuByQr(
+        @Path("kodeQr") kodeQr: String
+    ): Appointment
+
+    @PUT("api/appointments/{id}/reschedule")
+    suspend fun rescheduleAppointment(
+        @Header("Authorization") token: String,
+        @Path("id") id: Int,
+        @Body request: RescheduleAppointmentRequest
+    ): Appointment
 }
+
+data class RescheduleAppointmentRequest(
+    val tanggal: String,
+    val waktu: String
+)
 
 data class CompletedAppointmentsResponse(
     val total: Int,

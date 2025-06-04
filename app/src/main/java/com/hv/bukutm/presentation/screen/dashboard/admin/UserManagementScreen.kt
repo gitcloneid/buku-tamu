@@ -61,7 +61,7 @@ fun UserManagementScreen(
     var editEmail by remember { mutableStateOf("") }
     var editRole by remember { mutableStateOf("Guru") }
 
-    val roles = listOf("Guru", "PenerimaTamu")
+    val roles = listOf("Guru", "Penerima Tamu")
 
     // Gunakan warna dari MaterialTheme.colorScheme untuk mendukung tema dinamis
     val primaryColor = MaterialTheme.colorScheme.primary
@@ -772,7 +772,7 @@ fun EmptyState(
         modifier = Modifier
             .fillMaxSize()
             .padding(32.dp)
-            .background(MaterialTheme.colorScheme.background), // Pastikan background sesuai tema
+            .background(MaterialTheme.colorScheme.background),
         contentAlignment = Alignment.Center
     ) {
         Column(

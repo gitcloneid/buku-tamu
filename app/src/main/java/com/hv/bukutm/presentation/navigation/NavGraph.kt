@@ -17,8 +17,10 @@ import com.hv.bukutm.presentation.screen.dashboard.HistoryScreen
 import com.hv.bukutm.presentation.screen.dashboard.admin.MonthlyReportScreen
 import com.hv.bukutm.presentation.screen.home.HomeAdmin
 import com.hv.bukutm.presentation.screen.home.HomePenerimaTamu
+import com.hv.bukutm.presentation.screen.home.HomeTamu
 import com.hv.bukutm.presentation.screen.home.HomeTeacher
 import com.hv.bukutm.presentation.screen.login.LoginScreen
+import com.hv.bukutm.presentation.screen.login.TamuLoginScreen
 import com.hv.bukutm.presentation.screen.notification.NotificationScreen
 import com.hv.bukutm.utils.JwtUtils
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -36,22 +38,24 @@ fun NavGraph(
 
     LaunchedEffect(Unit) {
         val token = viewModel.tokenManager.accessToken.firstOrNull()
+        val tamu = viewModel.tokenManager.tamu.firstOrNull()
         if (token != null) {
             val role = JwtUtils.getRoleFromToken(token)
-            Log.d("LoginRole", "User role: $role") // Logging the role
+            Log.d("LoginRole", "User role: $role")
             startDestination.value = when (role) {
                 "Admin" -> "admin_home"
                 "Guru" -> "teacher_home"
-                "PenerimaTamu" -> "home_penerima_tamu"
+                "Penerima Tamu" -> "home_penerima_tamu"
                 else -> "login"
             }
+        } else if (tamu != null) {
+            Log.d("LoginRole", "Tamu found, redirecting to home_tamu")
+            startDestination.value = "home_tamu"
         } else {
-            Log.d("LoginRole", "No token found, redirecting to login")
+            Log.d("LoginRole", "No token or tamu found, redirecting to login")
             startDestination.value = "login"
         }
     }
-
-
 
     NavHost(
         navController = navController,
@@ -60,6 +64,12 @@ fun NavGraph(
     ) {
         composable("login") {
             LoginScreen(navController = navController)
+        }
+        composable("tamu_login") {
+            TamuLoginScreen(navController = navController)
+        }
+        composable("home_tamu") {
+            HomeTamu(navController = navController, tokenManager = tokenManager)
         }
         composable("admin_home") {
             HomeAdmin(navController = navController, tokenManager = tokenManager)

@@ -12,6 +12,7 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.hv.bukutm.activity.ScanQrScreen
 import com.hv.bukutm.data.TokenManager
 import com.hv.bukutm.domain.model.Tamu
 import com.hv.bukutm.presentation.navigation.AdminBottomNav
@@ -22,7 +23,6 @@ import com.hv.bukutm.presentation.navigation.TamuNavBar
 import com.hv.bukutm.presentation.screen.dashboard.AddAppointmentScreen
 import com.hv.bukutm.presentation.screen.dashboard.TanggalScreen
 import com.hv.bukutm.presentation.screen.dashboard.penerimatamu.ReportsScreen
-import com.hv.bukutm.presentation.screen.dashboard.penerimatamu.ScanQrScreen
 import com.hv.bukutm.presentation.screen.profile.ProfileScreen
 import kotlinx.coroutines.flow.collectLatest
 

@@ -2,6 +2,7 @@ package com.hv.bukutm.data.repository
 
 import com.hv.bukutm.data.remote.AppointmentApi
 import com.hv.bukutm.data.remote.AppointmentRequest
+import com.hv.bukutm.data.remote.RescheduleAppointmentRequest
 import com.hv.bukutm.data.remote.TamuRequest
 import com.hv.bukutm.domain.model.Appointment
 import com.hv.bukutm.domain.model.Tamu
@@ -175,6 +176,44 @@ class AppointmentRepositoryImpl @Inject constructor(
                 token = "Bearer $token",
                 id = id,
                 status = status
+            )
+            Result.success(appointment)
+        } catch (e: HttpException) {
+            Result.failure(Exception("HTTP ${e.code()}: ${e.message()}"))
+        } catch (e: IOException) {
+            Result.failure(Exception("Network error: ${e.message}"))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun getTamuByQr(token: String?, kodeQr: String): Result<Appointment> {
+        return try {
+            if (kodeQr.isBlank()) {
+                return Result.failure(Exception("Invalid QR code"))
+            }
+            val response = appointmentApi.getTamuByQr(kodeQr)
+            Result.success(response)
+        } catch (e: HttpException) {
+            Result.failure(Exception("HTTP ${e.code()}: ${e.message()}"))
+        } catch (e: IOException) {
+            Result.failure(Exception("Network error: ${e.message}"))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun rescheduleAppointment(
+        token: String,
+        id: Int,
+        tanggal: String,
+        waktu: String
+    ): Result<Appointment> {
+        return try {
+            val appointment = appointmentApi.rescheduleAppointment(
+                token = "Bearer $token",
+                id = id,
+                request = RescheduleAppointmentRequest(tanggal, waktu)
             )
             Result.success(appointment)
         } catch (e: HttpException) {
