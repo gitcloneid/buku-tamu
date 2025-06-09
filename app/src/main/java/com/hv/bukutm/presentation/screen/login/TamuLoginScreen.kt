@@ -95,13 +95,14 @@ fun TamuLoginScreenContent(
                     modifier = Modifier.size(screenWidth.times(0.3f))
                 )
 
+
                 Text(
                     text = "SMKN 2 SINGOSARI",
                     style = MaterialTheme.typography.headlineMedium,
-                    color = Color(0xFFF4EFEF),
-                    fontSize = 29.sp,
+                    color = Color(0xFFF7F5F5),
+                    fontSize = 25.sp,
                     fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(top = 225.dp)
+                    modifier = Modifier.padding(top = 185.dp)
                 )
             }
 

@@ -25,15 +25,7 @@ fun TamuNavBar(
 ) {
     NavigationBar(
         modifier = modifier
-            .clip(
-                RoundedCornerShape(
-                    topStart = 16.dp,
-                    topEnd = 16.dp,
-                    bottomStart = 0.dp,
-                    bottomEnd = 0.dp
-                )
-            )
-            .height(65.dp),
+            .height(80.dp),
         containerColor = MaterialTheme.colorScheme.surface,
         tonalElevation = 0.dp
     ) {
@@ -47,13 +39,13 @@ fun TamuNavBar(
                         modifier = Modifier
                             .size(
                                 when (item) {
-                                    TamuItem.Dashboard_Tamu -> 28.dp
-                                    TamuItem.Qr_Tamu -> 28.dp
-                                    TamuItem.Profile_Tamu -> 28.dp
-                                    else -> 28.dp
+                                    TamuItem.Dashboard_Tamu -> 24.dp
+                                    TamuItem.Qr_Tamu -> 24.dp
+                                    TamuItem.Profile_Tamu -> 24.dp
+                                    else -> 24.dp
                                 }
                             )
-                            .padding(2.dp)
+                            .padding(1.dp)
                     )
                 },
                 selected = currentRoute == item.route,

@@ -48,6 +48,7 @@ import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.time.ZoneOffset
+import java.time.temporal.ChronoUnit
 import java.util.*
 
 @Composable
@@ -425,7 +426,6 @@ private fun AppointmentResultScreen(
                         Icon(
                             imageVector = Icons.Rounded.ArrowBack,
                             contentDescription = "Back",
-//                            tint = MaterialTheme.colorScheme.onPrimary
                         )
                     }
                 },
@@ -513,6 +513,14 @@ private fun AppointmentDetailCard(
     var showRescheduleDialog by remember { mutableStateOf(false) }
     var lastRescheduleStatus by remember { mutableStateOf<Boolean?>(null) }
 
+    // Periksa apakah tanggal janji temu adalah hari ini
+    val isToday = try {
+        val appointmentDate = LocalDate.parse(appointment.tanggal, DateTimeFormatter.ofPattern("yyyy-MM-dd"))
+        appointmentDate.isEqual(LocalDate.now())
+    } catch (e: Exception) {
+        false
+    }
+
     LaunchedEffect(lastRescheduleStatus) {
         if (lastRescheduleStatus == true) {
             snackbarHostState.showSnackbar(
@@ -574,8 +582,8 @@ private fun AppointmentDetailCard(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Action Buttons
-            if (appointment.status == "Menunggu") {
+            // Action Buttons atau Status Text
+            if (appointment.status == "Menunggu" && isToday) {
                 Column(
                     modifier = Modifier.fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -602,45 +610,32 @@ private fun AppointmentDetailCard(
                         )
                     }
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    // Set Telat or Selesai based on time difference
+                    Button(
+                        onClick = {
+                            try {
+                                val appointmentTime = LocalTime.parse(appointment.waktu, DateTimeFormatter.ofPattern("HH:mm"))
+                                val currentTime = LocalTime.now()
+                                val minutesLate = ChronoUnit.MINUTES.between(appointmentTime, currentTime)
+                                val newStatus = if (minutesLate > 45) "Telat" else "Selesai"
+                                viewModel.updateAppointmentStatus(appointment.idJanjiTemu, newStatus)
+                            } catch (e: Exception) {
+                                viewModel.setError("Format waktu tidak valid")
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp),
+                        enabled = !isLoading,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF148E00).copy(alpha = 0.9f)
+                        )
                     ) {
-                        // Set Telat Button
-                        Button(
-                            onClick = { viewModel.updateAppointmentStatus(appointment.idJanjiTemu, "Telat") },
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(48.dp),
-                            enabled = !isLoading,
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFFF25C05).copy(alpha = 0.9f)
-                            )
-                        ) {
-                            Text(
-                                "Terlambat",
-                                fontWeight = FontWeight.SemiBold,
-                                fontSize = 16.sp
-                            )
-                        }
-
-                        // Set Selesai Button
-                        Button(
-                            onClick = { viewModel.updateAppointmentStatus(appointment.idJanjiTemu, "Selesai") },
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(48.dp),
-                            enabled = !isLoading,
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFF148E00).copy(alpha = 0.9f)
-                            )
-                        ) {
-                            Text(
-                                "Selesai",
-                                fontWeight = FontWeight.SemiBold,
-                                fontSize = 16.sp
-                            )
-                        }
+                        Text(
+                            "Tandai Hadir",
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 16.sp
+                        )
                     }
                 }
             } else {
@@ -649,7 +644,7 @@ private fun AppointmentDetailCard(
                     else -> appointment.status
                 }
                 Text(
-                    text = "Status: ${customStatus}",
+                    text = if (!isToday) "Jadwal tidak untuk hari ini" else "Status: $customStatus",
                     style = MaterialTheme.typography.bodyLarge,
                     color = when (appointment.status) {
                         "Selesai" -> Color(0xFF148E00)
@@ -682,7 +677,7 @@ private fun AppointmentDetailCard(
     }
 
     val scope = rememberCoroutineScope()
-    if (showRescheduleDialog) {
+    if (showRescheduleDialog && isToday) {
         RescheduleDialog(
             appointmentId = appointment.idJanjiTemu,
             initialDate = appointment.tanggal,
@@ -691,7 +686,7 @@ private fun AppointmentDetailCard(
             onDismissRequest = { showRescheduleDialog = false },
             onRescheduleSuccess = {
                 scope.launch {
-                    lastRescheduleStatus = true //trigger launched eff
+                    lastRescheduleStatus = true
                     snackbarHostState.showSnackbar(
                         message = "Janji temu berhasil dijadwalkan ulang",
                         withDismissAction = true,
@@ -809,7 +804,7 @@ private fun RescheduleDialog(
                 )
 
                 OutlinedTextField(
-                    value = date,
+                    value = date.formatToIndoDate(),
                     onValueChange = {},
                     label = { Text("Tanggal") },
                     leadingIcon = {

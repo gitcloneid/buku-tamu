@@ -87,10 +87,17 @@ class AppointmentRepositoryImpl @Inject constructor(
     override suspend fun getCompletedAppointments(
         token: String,
         page: Int,
-        limit: Int
+        limit: Int,
+        lastMonths: Int?
     ): Result<List<Appointment>> {
         return try {
-            val response = appointmentApi.getCompletedAppointments("Bearer $token", "Selesai", page, limit)
+            val response = appointmentApi.getCompletedAppointments(
+                "Bearer $token",
+                "Selesai,Telat",
+                page,
+                limit,
+                lastMonths // Pass lastMonths if provided
+            )
             val appointments = response.data.map { appointmentResponse ->
                 Appointment(
                     idJanjiTemu = appointmentResponse.idJanjiTemu,
@@ -119,6 +126,7 @@ class AppointmentRepositoryImpl @Inject constructor(
             Result.failure(e)
         }
     }
+
     override suspend fun getPendingAppointments(
         token: String,
         page: Int,
@@ -224,4 +232,65 @@ class AppointmentRepositoryImpl @Inject constructor(
             Result.failure(e)
         }
     }
+
+    override suspend fun getTamuHistory(
+        token: String,
+        lastmonth: Int?,
+        phoneNumber: String?
+    ): Result<List<Appointment>> {
+        return try {
+            // Log request param
+            println("🔷 [REQUEST] getTamuHistory")
+            println("🔷 Token: Bearer $token")
+            println("🔷 lastmonth: $lastmonth")
+            println("🔷 phoneNumber: $phoneNumber")
+
+            val response = appointmentApi.getTamuHistory(
+                "Bearer $token",
+                lastmonth = lastmonth,
+                phoneNumber = phoneNumber
+            )
+
+            // Log response body (raw)
+            println("🟢 [RESPONSE] getTamuHistory: $response")
+
+            val appointments = response.map { appointmentResponse ->
+                Appointment(
+                    idJanjiTemu = appointmentResponse.idJanjiTemu,
+                    tanggal = appointmentResponse.tanggal,
+                    waktu = appointmentResponse.waktu,
+                    status = appointmentResponse.status,
+                    keperluan = appointmentResponse.keperluan,
+                    kodeQr = appointmentResponse.kodeQr,
+                    tamu = Tamu(
+                        idTamu = appointmentResponse.tamu.idTamu,
+                        nama = appointmentResponse.tamu.nama,
+                        telepon = appointmentResponse.tamu.telepon
+                    ),
+                    guru = User(
+                        idPengguna = appointmentResponse.guru.idPengguna,
+                        nama = appointmentResponse.guru.nama,
+                        email = appointmentResponse.guru.email ?: "",
+                        role = appointmentResponse.guru.role ?: "",
+                        token = "",
+                        refreshToken = ""
+                    )
+                )
+            }
+
+            println("🟢 [PARSED] Appointments: $appointments")
+
+            Result.success(appointments)
+        } catch (e: HttpException) {
+            println("❌ [HTTP ERROR] ${e.code()}: ${e.message()}")
+            Result.failure(Exception("HTTP ${e.code()}: ${e.message()}"))
+        } catch (e: IOException) {
+            println("❌ [NETWORK ERROR] ${e.message}")
+            Result.failure(Exception("Network error: ${e.message}"))
+        } catch (e: Exception) {
+            println("❌ [ERROR] ${e.message}")
+            Result.failure(e)
+        }
+    }
+
 }

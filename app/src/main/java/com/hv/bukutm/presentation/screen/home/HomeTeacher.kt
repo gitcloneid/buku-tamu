@@ -39,40 +39,46 @@ fun HomeTeacher(
         }
     }
 
-    Scaffold(
-        bottomBar = {
-            BottomNavBar(
-                navController = nestedNavController,
-                items = HomeNavBarItems
-            )
-        },
-        contentWindowInsets = WindowInsets(0, 0, 0, 0)
-    ) { innerPadding ->
-        NavHost(
-            navController = nestedNavController,
-            startDestination = HomeNavBarItems[0].route,
-            modifier = Modifier.padding(innerPadding)
+    Column(
+        modifier = modifier.fillMaxSize()
+    ) {
+        // Content area - takes remaining space
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
         ) {
-            composable(HomeNavBarItems[0].route) { // Dashboard Section
-                DashboardGuruScreen(navController = navController)
-            }
-            composable(HomeNavBarItems[1].route) { // Tanggal Section
-                TanggalScreen()
-            }
-            composable(HomeNavBarItems[2].route) { // Notifikasi Section
-                NotificationScreen()
-            }
-            composable(HomeNavBarItems[3].route) { // Profile Section
-                ProfileScreen(
-                    tokenManager = tokenManager,
-                    onLogout = {
-                        viewModel.logout()
-                        navController.navigate("login") {
-                            popUpTo("admin_home") { inclusive = true }
+            NavHost(
+                navController = nestedNavController,
+                startDestination = HomeNavBarItems[0].route
+            ) {
+                composable(HomeNavBarItems[0].route) { // Dashboard Section
+                    DashboardGuruScreen(navController = navController)
+                }
+                composable(HomeNavBarItems[1].route) { // Tanggal Section
+                    TanggalScreen()
+                }
+                composable(HomeNavBarItems[2].route) { // Notifikasi Section
+                    NotificationScreen()
+                }
+                composable(HomeNavBarItems[3].route) { // Profile Section
+                    ProfileScreen(
+                        tokenManager = tokenManager,
+                        onLogout = {
+                            viewModel.logout()
+                            navController.navigate("login") {
+                                popUpTo("admin_home") { inclusive = true }
+                            }
                         }
-                    }
-                )
+                    )
+                }
             }
         }
+
+        // Bottom navigation bar
+        BottomNavBar(
+            navController = nestedNavController,
+            items = HomeNavBarItems
+        )
     }
 }

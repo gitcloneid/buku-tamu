@@ -111,9 +111,9 @@ fun LoginScreenContent(
                     text = "SMKN 2 SINGOSARI",
                     style = MaterialTheme.typography.headlineMedium,
                     color = Color(0xFFF7F5F5),
-                    fontSize = 29.sp,
+                    fontSize = 25.sp,
                     fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(top = 225.dp)
+                    modifier = Modifier.padding(top = 185.dp) 
                 )
             }
 
@@ -127,7 +127,7 @@ fun LoginScreenContent(
             ) {
                 // Login Buku Tamu text
                 Text(
-                    text = "Masuk Buku Tamu Sebagai Pengguna",
+                    text = "Masuk Buku Tamu",
                     style = MaterialTheme.typography.headlineMedium,
                     color = Color(0xFF2196F3),
                     fontSize = 25.sp,
@@ -303,14 +303,14 @@ fun LoginScreenContent(
     }
 }
 
-//@Preview(showBackground = true, showSystemUi = true)
-//@Composable
-//fun LoginScreenPreview() {
-//    BukuTMTheme {
-//        LoginScreenContent(
-//            state = LoginUiState(),
-//            onLoginClick = { _, _ -> },
-//            navcontroller = NavController()
-//        )
-//    }
-//}
+@Preview(showBackground = true, showSystemUi = true)
+@Composable
+fun LoginScreenPreview() {
+    BukuTMTheme {
+        LoginScreenContent(
+            state = LoginUiState(),
+            onLoginClick = { _, _ -> },
+            navcontroller = NavController(LocalContext.current),
+        )
+    }
+}

@@ -25,15 +25,7 @@ fun TamuNavBarItem(
 ) {
     NavigationBar(
         modifier = modifier
-            .clip(
-                RoundedCornerShape(
-                    topStart = 16.dp,
-                    topEnd = 16.dp,
-                    bottomStart = 0.dp,
-                    bottomEnd = 0.dp
-                )
-            )
-            .height(65.dp),
+            .height(80.dp),
         containerColor = MaterialTheme.colorScheme.surface,
         tonalElevation = 0.dp
     ) {
@@ -47,12 +39,13 @@ fun TamuNavBarItem(
                         modifier = Modifier
                             .size(
                                 when (item) {
-                                    Login_Tamu.Dashboard_Tamu -> 28.dp
-                                    Login_Tamu.Profile_Tamu -> 28.dp   // Larger to compensate for smaller intrinsic size
-                                    else -> 28.dp
+                                    Login_Tamu.Dashboard_Tamu -> 24.dp
+                                    Login_Tamu.History_Tamu -> 24.dp
+                                    Login_Tamu.Profile_Tamu -> 24.dp   // Larger to compensate for smaller intrinsic size
+                                    else -> 24.dp
                                 }
                             )
-                            .padding(2.dp)
+                            .padding(1.dp)
                     )
                 },
                 selected = currentRoute == item.route,

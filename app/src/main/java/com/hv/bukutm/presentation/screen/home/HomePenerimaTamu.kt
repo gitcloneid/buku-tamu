@@ -14,14 +14,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.hv.bukutm.activity.ScanQrScreen
 import com.hv.bukutm.data.TokenManager
-import com.hv.bukutm.domain.model.Tamu
-import com.hv.bukutm.presentation.navigation.AdminBottomNav
-import com.hv.bukutm.presentation.navigation.AdminHomeBarItem
-import com.hv.bukutm.presentation.navigation.BottomNavBar
 import com.hv.bukutm.presentation.navigation.TamuBarItem
 import com.hv.bukutm.presentation.navigation.TamuNavBar
-import com.hv.bukutm.presentation.screen.dashboard.AddAppointmentScreen
-import com.hv.bukutm.presentation.screen.dashboard.TanggalScreen
 import com.hv.bukutm.presentation.screen.dashboard.penerimatamu.ReportsScreen
 import com.hv.bukutm.presentation.screen.profile.ProfileScreen
 import kotlinx.coroutines.flow.collectLatest
@@ -35,37 +29,43 @@ fun HomePenerimaTamu(
     val nestedNavController = rememberNavController()
     val viewModel: HomeViewModel = hiltViewModel()
 
-    Scaffold(
-        bottomBar = {
-            TamuNavBar(
-                navController = nestedNavController,
-                items = TamuBarItem
-            )
-        },
-        contentWindowInsets = WindowInsets(0, 0, 0, 0)
-    ) { innerPadding ->
-        NavHost(
-            navController = nestedNavController,
-            startDestination = TamuBarItem[0].route,
-            modifier = Modifier.padding(innerPadding)
+    Column(
+        modifier = modifier.fillMaxSize()
+    ) {
+        // Content area - takes remaining space
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
         ) {
-            composable(TamuBarItem[0].route) { // Dashboard Section
-                ReportsScreen(navController = navController)
-            }
-            composable(TamuBarItem[1].route) { // Add Appointment Section
-                ScanQrScreen(navController = navController)
-            }
-            composable(TamuBarItem[2].route) { // Profile Section
-                ProfileScreen(
-                    tokenManager = tokenManager,
-                    onLogout = {
-                        viewModel.logout()
-                        navController.navigate("login") {
-                            popUpTo("admin_home") { inclusive = true }
+            NavHost(
+                navController = nestedNavController,
+                startDestination = TamuBarItem[0].route
+            ) {
+                composable(TamuBarItem[0].route) { // Dashboard Section
+                    ReportsScreen(navController = navController)
+                }
+                composable(TamuBarItem[1].route) { // Add Appointment Section
+                    ScanQrScreen(navController = navController)
+                }
+                composable(TamuBarItem[2].route) { // Profile Section
+                    ProfileScreen(
+                        tokenManager = tokenManager,
+                        onLogout = {
+                            viewModel.logout()
+                            navController.navigate("login") {
+                                popUpTo("admin_home") { inclusive = true }
+                            }
                         }
-                    }
-                )
+                    )
+                }
             }
         }
+
+        // Bottom navigation bar
+        TamuNavBar(
+            navController = nestedNavController,
+            items = TamuBarItem
+        )
     }
 }

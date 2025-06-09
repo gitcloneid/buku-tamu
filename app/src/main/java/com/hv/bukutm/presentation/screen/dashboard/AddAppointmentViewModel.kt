@@ -20,8 +20,8 @@ import java.io.ByteArrayOutputStream
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
-import javax.inject.Inject
 import java.util.Locale
+import javax.inject.Inject
 
 data class AddAppointmentUiState(
     val name: String = "",
@@ -41,7 +41,8 @@ data class AddAppointmentUiState(
     val timeDialogError: String? = null,
     val dateDialogError: String? = null,
     val kodeQr: String? = null,
-    val snackbarMessage: String? = null
+    val snackbarMessage: String? = null,
+    val isQrSent: Boolean = false // Tambahan untuk melacak status pengiriman QR
 )
 
 @HiltViewModel
@@ -123,7 +124,6 @@ class AddAppointmentViewModel @Inject constructor(
         showDatePicker(false)
         _dateDialogError.value = null
     }
-
 
     fun updateTime(time: LocalTime?) {
         val startTime = LocalTime.of(8, 0)
@@ -345,7 +345,6 @@ class AddAppointmentViewModel @Inject constructor(
                     Nama: ${_uiState.value.name}
                     Tanggal: $formattedDate
                     Waktu: ${_uiState.value.time}
-                    Keperluan: ${_uiState.value.purpose}
                     Kode: *${_uiState.value.kodeQr}*
                     Silakan tunjukkan QR code ini saat kedatangan.
                     Untuk memeriksa status, gunakan aplikasi Buku Tamu SMKN 2 Singosari.
@@ -362,7 +361,7 @@ class AddAppointmentViewModel @Inject constructor(
                 )
 
                 if (response.status == "media_sent") {
-                    _uiState.update { it.copy(snackbarMessage = "Kode QR berhasil dikirim ke WhatsApp") }
+                    _uiState.update { it.copy(snackbarMessage = "Kode QR berhasil dikirim ke WhatsApp", isQrSent = true) }
                     Log.d("ViewModel", "QR code sent successfully to $normalizedPhone")
                 } else {
                     _uiState.update { it.copy(snackbarMessage = "Gagal mengirim QR ke WhatsApp: ${response.status}") }

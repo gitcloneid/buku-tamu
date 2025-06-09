@@ -163,4 +163,8 @@ class ScanQrViewModel @Inject constructor(
     fun clearUpdateStatus() {
         _updateStatusSuccess.value = null
     }
+
+    fun setError(message: String) {
+        _errorMessage.value = message
+    }
 }

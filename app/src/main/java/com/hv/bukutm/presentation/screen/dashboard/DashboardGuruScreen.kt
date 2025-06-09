@@ -308,7 +308,7 @@ fun AppointmentCard(appointment: Appointment) {
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "Telp: ${appointment.tamu.telepon}",
+                text = "Telepon: ${appointment.tamu.telepon}",
                 fontSize = 14.sp,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
             )

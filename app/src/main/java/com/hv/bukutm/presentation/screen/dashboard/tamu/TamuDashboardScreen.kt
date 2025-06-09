@@ -42,83 +42,83 @@ fun TamuDashboard(
 ) {
     val state by viewModel.uiState.collectAsState()
 
-    Scaffold(
-    ) { paddingValues ->
-        state.appointment?.let { appointment ->
-            Column(
+    state.appointment?.let { appointment ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp)
+                .verticalScroll(rememberScrollState())
+        ) {
+            val statusColor = when (appointment.status) {
+                "Menunggu" -> Color(0xFF00729F)
+                "Selesai" -> Color(0xFF148E00)
+                "Telat" -> Color(0xFFF25C05)
+                else -> MaterialTheme.colorScheme.primary
+            }
+            Spacer(modifier = Modifier.height(14.dp))
+            Text(
+                text = "Informasi Pertemuan",
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            Card(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .padding(16.dp)
-                    .verticalScroll(rememberScrollState())
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = statusColor.copy(alpha = 0.1f)
+                ),
+                border = BorderStroke(1.dp, statusColor)
             ) {
-
-                val statusColor = when (appointment.status) {
-                    "Menunggu" -> Color(0xFF00729F)
-                    "Selesai" -> Color(0xFF148E00)
-                    "Telat" -> Color(0xFFF25C05)
-                    else -> MaterialTheme.colorScheme.primary
-                }
-
-                Card(
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 8.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = statusColor.copy(alpha = 0.1f)
-                    ),
-                    border = BorderStroke(1.dp, statusColor)
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Row(
+                    Box(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(12.dp)
-                                .clip(CircleShape)
-                                .background(statusColor)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        val FormattedStatus = when (appointment.status) {
-                            "Telat" -> "Terlambat"
-                            else -> appointment.status
-                        }
-                        Text(
-                            text = "Status: ${FormattedStatus}",
-                            fontWeight = FontWeight.Medium,
-                            color = statusColor
-                        )
+                            .size(12.dp)
+                            .clip(CircleShape)
+                            .background(statusColor)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    val FormattedStatus = when (appointment.status) {
+                        "Telat" -> "Terlambat"
+                        else -> appointment.status
                     }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Appointment details
-                TamuAppointmentDetailCard(
-                    appointment = appointment
-                )
-            }
-        } ?: run {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                if (state.isLoading) {
-                    CircularProgressIndicator()
-                } else if (state.error != null) {
                     Text(
-                        text = state.error ?: "Unknown error",
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodyMedium
+                        text = "Status: ${FormattedStatus}",
+                        fontWeight = FontWeight.Medium,
+                        color = statusColor
                     )
                 }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Appointment details
+            TamuAppointmentDetailCard(
+                appointment = appointment
+            )
+        }
+    } ?: run {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            if (state.isLoading) {
+                CircularProgressIndicator()
+            } else if (state.error != null) {
+                Text(
+                    text = state.error ?: "Unknown error",
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodyMedium
+                )
             }
         }
     }

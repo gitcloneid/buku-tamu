@@ -401,7 +401,7 @@ fun UserManagementScreen(
                             showAddUserDialog = false
                         },
                         enabled = createName.isNotBlank() && createEmail.isNotBlank() &&
-                                createPassword.isNotBlank() && createPassword.length >= 6,
+                                createPassword.isNotBlank() && createPassword.length >= 8,
                         shape = RoundedCornerShape(12.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = accentColor,

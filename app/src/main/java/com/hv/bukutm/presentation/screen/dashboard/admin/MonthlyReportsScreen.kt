@@ -38,8 +38,6 @@ import java.time.format.DateTimeFormatter
 import java.util.*
 import kotlin.math.ceil
 
-
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MonthlyReportScreen(
@@ -70,7 +68,7 @@ fun MonthlyReportScreen(
                 },
             )
         },
-        contentWindowInsets = WindowInsets(0,0,0,0)
+        contentWindowInsets = WindowInsets(0, 0, 0, 0)
     ) { padding ->
         Column(
             modifier = Modifier
@@ -252,7 +250,6 @@ private fun MonthlyReportContent(report: MonthlyReport) {
                     color = MaterialTheme.colorScheme.primary
                 )
                 Spacer(modifier = Modifier.height(16.dp))
-                // Menggunakan chart buatan sendiri
                 CustomBarChart(weeklyStats = report.weeklyStats)
             }
         }
@@ -261,18 +258,15 @@ private fun MonthlyReportContent(report: MonthlyReport) {
 
 @Composable
 private fun CustomBarChart(weeklyStats: List<WeeklyStats>) {
-    val totalColor = Color(0xFF00729F)
-
-    val completedColor = Color(0xFF148E00)
-    //cari nilai tertinggi chart
+    // Colors - blue for total background, green for completed
+    val totalColor = Color(0xFF2196F3) // Blue for uncompleted portion
+    val completedColor = Color(0xFF4CAF50) // Green for completed portion
     val maxStatValue = weeklyStats.maxOfOrNull { it.total }?.toFloat() ?: 1f
-
-    // buat agar keatas y set
-    val yAxisMax = (ceil(maxStatValue / 10) * 10).toInt()
+    val yAxisMax = (ceil(maxStatValue / 10) * 10).toInt().takeIf { it > 0 } ?: 10
 
     Column(modifier = Modifier.fillMaxWidth()) {
-        Row(modifier = Modifier.fillMaxWidth().height(200.dp)) {
-            //sumbu kiri
+        Row(modifier = Modifier.fillMaxWidth().height(280.dp)) { // Increased height for better visibility
+            // Y-axis
             Column(
                 modifier = Modifier
                     .fillMaxHeight()
@@ -285,7 +279,6 @@ private fun CustomBarChart(weeklyStats: List<WeeklyStats>) {
                 Text(text = "0", style = MaterialTheme.typography.labelSmall)
             }
 
-
             Divider(modifier = Modifier.fillMaxHeight().width(1.dp))
 
             Row(
@@ -296,7 +289,7 @@ private fun CustomBarChart(weeklyStats: List<WeeklyStats>) {
                 verticalAlignment = Alignment.Bottom
             ) {
                 weeklyStats.forEach { stat ->
-                    Bar(
+                    StackedBar(
                         totalValue = stat.total.toFloat(),
                         completedValue = stat.completed.toFloat(),
                         maxValue = yAxisMax.toFloat(),
@@ -309,6 +302,8 @@ private fun CustomBarChart(weeklyStats: List<WeeklyStats>) {
         }
         Divider(modifier = Modifier.fillMaxWidth().padding(start = 40.dp))
         Spacer(modifier = Modifier.height(16.dp))
+
+        // Legend
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.Center,
@@ -322,7 +317,7 @@ private fun CustomBarChart(weeklyStats: List<WeeklyStats>) {
 }
 
 @Composable
-private fun Bar(
+private fun StackedBar(
     totalValue: Float,
     completedValue: Float,
     maxValue: Float,
@@ -330,38 +325,104 @@ private fun Bar(
     completedColor: Color,
     label: String
 ) {
-    val barWidth = 40.dp
-    // Kalkulasi tinggi bar sebagai persentase dari tinggi maksimum
+    val barWidth = 48.dp // Slightly wider bars
     val totalHeightFraction = if (maxValue > 0) totalValue / maxValue else 0f
-    val completedHeightFraction = if (totalValue > 0) completedValue / totalValue else 0f
+    val completionRate = if (totalValue > 0) (completedValue / totalValue * 100).toInt() else 0
+    val uncompletedValue = totalValue - completedValue
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Bottom,
         modifier = Modifier.fillMaxHeight()
     ) {
-        // Box untuk menampung bar
-        Box(
+
+
+        // Stacked Bar
+        Column(
             modifier = Modifier
                 .width(barWidth)
-                .fillMaxHeight(totalHeightFraction) // Tinggi bar total
-                .clip(RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp))
-                .background(totalColor)
+                .fillMaxHeight(totalHeightFraction),
+            verticalArrangement = Arrangement.Bottom
         ) {
-            // Bar untuk 'selesai' ditumpuk di dalam bar 'total'
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .fillMaxHeight(completedHeightFraction) // Tinggi relatif terhadap bar total
-                    .align(Alignment.BottomCenter)
-                    .background(completedColor)
-            )
+            // Uncompleted portion (blue) - top part
+            if (uncompletedValue > 0) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height((200.dp * totalHeightFraction * (uncompletedValue / totalValue)))
+                        .clip(
+                            if (completedValue == 0f) RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp)
+                            else RoundedCornerShape(0.dp)
+                        )
+                        .background(totalColor)
+                ) {
+                    // Show total number in the middle of uncompleted portion if it's large enough
+                    if (uncompletedValue >= totalValue * 0.3f) {
+                        Text(
+                            text = totalValue.toInt().toString(),
+                            style = MaterialTheme.typography.labelMedium.copy(
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp
+                            ),
+                            modifier = Modifier.align(Alignment.Center)
+                        )
+                    }
+                }
+            }
+
+            // Completed portion (green) - bottom part
+            if (completedValue > 0) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height((200.dp * totalHeightFraction * (completedValue / totalValue)))
+                        .clip(
+                            if (uncompletedValue == 0f) RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp)
+                            else RoundedCornerShape(0.dp)
+                        )
+                        .background(completedColor)
+                ) {
+                    // Show completed number in the middle of completed portion if it's large enough
+                    if (completedValue >= totalValue * 0.3f || uncompletedValue == 0f) {
+                        Text(
+                            text = completedValue.toInt().toString(),
+                            style = MaterialTheme.typography.labelMedium.copy(
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp
+                            ),
+                            modifier = Modifier.align(Alignment.Center)
+                        )
+                    }
+                }
+            }
+
+            // If total is shown in uncompleted but uncompleted is small, show total on top
+            if (totalValue > 0 && uncompletedValue < totalValue * 0.3f && uncompletedValue > 0) {
+                Text(
+                    text = totalValue.toInt().toString(),
+                    style = MaterialTheme.typography.labelMedium.copy(
+                        color = MaterialTheme.colorScheme.onSurface,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 12.sp
+                    ),
+                    modifier = Modifier
+                        .align(Alignment.CenterHorizontally)
+                        .offset(y = (-8).dp)
+                )
+            }
         }
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(text = label, style = MaterialTheme.typography.labelSmall)
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Week label
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall.copy(fontSize = 12.sp)
+        )
     }
 }
-
 
 @Composable
 private fun LegendItem(color: Color, text: String) {
@@ -377,15 +438,22 @@ private fun LegendItem(color: Color, text: String) {
     }
 }
 
-
 @Composable
 private fun DetailRow(label: String, value: String) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Text(text = label, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f))
-        Text(text = value, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.Bold
+        )
     }
 }
 
@@ -395,7 +463,6 @@ private fun exportToExcel(
     monthName: String,
     monthNumber: Int
 ) {
-    // Fungsi exportToExcel tetap sama, tidak perlu diubah
     try {
         val workbook = XSSFWorkbook()
         val sheet = workbook.createSheet("Laporan Bulanan")
