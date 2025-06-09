@@ -25,15 +25,7 @@ fun AdminBottomNav(
 ) {
     NavigationBar(
         modifier = modifier
-            .clip(
-                RoundedCornerShape(
-                    topStart = 16.dp,
-                    topEnd = 16.dp,
-                    bottomStart = 0.dp,
-                    bottomEnd = 0.dp
-                )
-            )
-            .height(65.dp), // Set a compact height for the bottom bar
+            .height(80.dp), // Set a compact height for the bottom bar
         containerColor = MaterialTheme.colorScheme.surface,
         tonalElevation = 0.dp
     ) {
@@ -47,13 +39,13 @@ fun AdminBottomNav(
                         modifier = Modifier
                             .size(
                                 when (item) {
-                                    AdminBarItem.Add_Admin  -> 28.dp
-                                    AdminBarItem.Dashboard_Admin ->  28.dp
-                                    AdminBarItem.Profile_Admin -> 28.dp
-                                    else -> 28.dp
+                                    AdminBarItem.Add_Admin  -> 24.dp
+                                    AdminBarItem.Dashboard_Admin ->  24.dp
+                                    AdminBarItem.Profile_Admin -> 24.dp
+                                    else -> 24.dp
                                 }
                             )
-                            .padding(2.dp)
+                            .padding(1.dp)
                     )
                 },
                 selected = currentRoute == item.route,

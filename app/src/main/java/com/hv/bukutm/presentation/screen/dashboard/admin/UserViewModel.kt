@@ -65,11 +65,11 @@ class UserViewModel @Inject constructor(
         if (password != null) {
             if (password.isBlank()) {
                 errors["password"] = "Kata sandi tidak boleh kosong"
-            } else if (password.length < 6) {
-                errors["password"] = "Kata sandi minimal 6 karakter"
+            } else if (password.length < 8) {
+                errors["password"] = "Kata sandi minimal 8 karakter"
             }
         }
-        if (role !in listOf("Guru", "PenerimaTamu")) {
+        if (role !in listOf("Guru", "Penerima Tamu")) {
             errors["role"] = "Pilih peran Guru atau Penerima Tamu"
         }
         return errors
@@ -288,7 +288,7 @@ class UserViewModel @Inject constructor(
                                     else -> "Gagal menghapus pengguna. Silakan coba lagi."
                                 }
                                 is IOException -> "Koneksi internet bermasalah. Periksa jaringan Anda."
-                                else -> "Terjadi kesalahan. Silakan coba lagi nanti."
+                                else -> "Pengguna tidak dapat dihapus karena memiliki janji temu"
                             }
                         )
                     }

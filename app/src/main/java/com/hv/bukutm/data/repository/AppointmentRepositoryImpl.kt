@@ -2,6 +2,7 @@ package com.hv.bukutm.data.repository
 
 import com.hv.bukutm.data.remote.AppointmentApi
 import com.hv.bukutm.data.remote.AppointmentRequest
+import com.hv.bukutm.data.remote.RescheduleAppointmentRequest
 import com.hv.bukutm.data.remote.TamuRequest
 import com.hv.bukutm.domain.model.Appointment
 import com.hv.bukutm.domain.model.Tamu
@@ -86,10 +87,17 @@ class AppointmentRepositoryImpl @Inject constructor(
     override suspend fun getCompletedAppointments(
         token: String,
         page: Int,
-        limit: Int
+        limit: Int,
+        lastMonths: Int?
     ): Result<List<Appointment>> {
         return try {
-            val response = appointmentApi.getCompletedAppointments("Bearer $token", "Selesai", page, limit)
+            val response = appointmentApi.getCompletedAppointments(
+                "Bearer $token",
+                "Selesai,Telat",
+                page,
+                limit,
+                lastMonths // Pass lastMonths if provided
+            )
             val appointments = response.data.map { appointmentResponse ->
                 Appointment(
                     idJanjiTemu = appointmentResponse.idJanjiTemu,
@@ -118,6 +126,7 @@ class AppointmentRepositoryImpl @Inject constructor(
             Result.failure(e)
         }
     }
+
     override suspend fun getPendingAppointments(
         token: String,
         page: Int,
@@ -185,4 +194,103 @@ class AppointmentRepositoryImpl @Inject constructor(
             Result.failure(e)
         }
     }
+
+    override suspend fun getTamuByQr(token: String?, kodeQr: String): Result<Appointment> {
+        return try {
+            if (kodeQr.isBlank()) {
+                return Result.failure(Exception("Invalid QR code"))
+            }
+            val response = appointmentApi.getTamuByQr(kodeQr)
+            Result.success(response)
+        } catch (e: HttpException) {
+            Result.failure(Exception("HTTP ${e.code()}: ${e.message()}"))
+        } catch (e: IOException) {
+            Result.failure(Exception("Network error: ${e.message}"))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun rescheduleAppointment(
+        token: String,
+        id: Int,
+        tanggal: String,
+        waktu: String
+    ): Result<Appointment> {
+        return try {
+            val appointment = appointmentApi.rescheduleAppointment(
+                token = "Bearer $token",
+                id = id,
+                request = RescheduleAppointmentRequest(tanggal, waktu)
+            )
+            Result.success(appointment)
+        } catch (e: HttpException) {
+            Result.failure(Exception("HTTP ${e.code()}: ${e.message()}"))
+        } catch (e: IOException) {
+            Result.failure(Exception("Network error: ${e.message}"))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun getTamuHistory(
+        token: String,
+        lastmonth: Int?,
+        phoneNumber: String?
+    ): Result<List<Appointment>> {
+        return try {
+            // Log request param
+            println("🔷 [REQUEST] getTamuHistory")
+            println("🔷 Token: Bearer $token")
+            println("🔷 lastmonth: $lastmonth")
+            println("🔷 phoneNumber: $phoneNumber")
+
+            val response = appointmentApi.getTamuHistory(
+                "Bearer $token",
+                lastmonth = lastmonth,
+                phoneNumber = phoneNumber
+            )
+
+            // Log response body (raw)
+            println("🟢 [RESPONSE] getTamuHistory: $response")
+
+            val appointments = response.map { appointmentResponse ->
+                Appointment(
+                    idJanjiTemu = appointmentResponse.idJanjiTemu,
+                    tanggal = appointmentResponse.tanggal,
+                    waktu = appointmentResponse.waktu,
+                    status = appointmentResponse.status,
+                    keperluan = appointmentResponse.keperluan,
+                    kodeQr = appointmentResponse.kodeQr,
+                    tamu = Tamu(
+                        idTamu = appointmentResponse.tamu.idTamu,
+                        nama = appointmentResponse.tamu.nama,
+                        telepon = appointmentResponse.tamu.telepon
+                    ),
+                    guru = User(
+                        idPengguna = appointmentResponse.guru.idPengguna,
+                        nama = appointmentResponse.guru.nama,
+                        email = appointmentResponse.guru.email ?: "",
+                        role = appointmentResponse.guru.role ?: "",
+                        token = "",
+                        refreshToken = ""
+                    )
+                )
+            }
+
+            println("🟢 [PARSED] Appointments: $appointments")
+
+            Result.success(appointments)
+        } catch (e: HttpException) {
+            println("❌ [HTTP ERROR] ${e.code()}: ${e.message()}")
+            Result.failure(Exception("HTTP ${e.code()}: ${e.message()}"))
+        } catch (e: IOException) {
+            println("❌ [NETWORK ERROR] ${e.message}")
+            Result.failure(Exception("Network error: ${e.message}"))
+        } catch (e: Exception) {
+            println("❌ [ERROR] ${e.message}")
+            Result.failure(e)
+        }
+    }
+
 }

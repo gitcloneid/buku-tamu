@@ -15,12 +15,7 @@ import androidx.navigation.compose.rememberNavController
 import com.hv.bukutm.data.TokenManager
 import com.hv.bukutm.presentation.navigation.AdminBottomNav
 import com.hv.bukutm.presentation.navigation.AdminHomeBarItem
-import com.hv.bukutm.presentation.navigation.BottomNavBar
-import com.hv.bukutm.presentation.screen.dashboard.AddAppointmentScreen
-import com.hv.bukutm.presentation.screen.dashboard.TanggalScreen
 import com.hv.bukutm.presentation.screen.dashboard.admin.AdminReport
-import com.hv.bukutm.presentation.screen.dashboard.admin.MonthlyReportScreen
-import com.hv.bukutm.presentation.screen.dashboard.penerimatamu.ReportsScreen
 import com.hv.bukutm.presentation.screen.profile.ProfileScreen
 import com.hv.bukutm.ui.screen.UserManagementScreen
 import kotlinx.coroutines.flow.collectLatest
@@ -34,37 +29,43 @@ fun HomeAdmin(
     val nestedNavController = rememberNavController()
     val viewModel: HomeViewModel = hiltViewModel()
 
-    Scaffold(
-        bottomBar = {
-            AdminBottomNav(
-                navController = nestedNavController,
-                items = AdminHomeBarItem
-            )
-        },
-        contentWindowInsets = WindowInsets(0, 0, 0, 0)
-    ) { innerPadding ->
-        NavHost(
-            navController = nestedNavController,
-            startDestination = AdminHomeBarItem[0].route,
-            modifier = Modifier.padding(innerPadding)
+    Column(
+        modifier = modifier.fillMaxSize()
+    ) {
+        // Content area - takes remaining space
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
         ) {
-            composable(AdminHomeBarItem[0].route) { // Dashboard Section
-                AdminReport(navController = navController)
-            }
-            composable(AdminHomeBarItem[1].route) { // Add Appointment Section
-                UserManagementScreen()
-            }
-            composable(AdminHomeBarItem[2].route) { // Profile Section
-                ProfileScreen(
-                    tokenManager = tokenManager,
-                    onLogout = {
-                        viewModel.logout()
-                        navController.navigate("login") {
-                            popUpTo("admin_home") { inclusive = true }
+            NavHost(
+                navController = nestedNavController,
+                startDestination = AdminHomeBarItem[0].route
+            ) {
+                composable(AdminHomeBarItem[0].route) { // Dashboard Section
+                    AdminReport(navController = navController)
+                }
+                composable(AdminHomeBarItem[1].route) { // Add Appointment Section
+                    UserManagementScreen()
+                }
+                composable(AdminHomeBarItem[2].route) { // Profile Section
+                    ProfileScreen(
+                        tokenManager = tokenManager,
+                        onLogout = {
+                            viewModel.logout()
+                            navController.navigate("login") {
+                                popUpTo("admin_home") { inclusive = true }
+                            }
                         }
-                    }
-                )
+                    )
+                }
             }
         }
+
+        // Bottom navigation bar
+        AdminBottomNav(
+            navController = nestedNavController,
+            items = AdminHomeBarItem
+        )
     }
 }

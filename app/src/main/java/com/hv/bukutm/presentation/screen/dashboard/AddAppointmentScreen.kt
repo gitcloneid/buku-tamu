@@ -32,6 +32,14 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import android.content.Context
+import android.graphics.Canvas
+import android.graphics.Paint
+import android.graphics.BitmapFactory
+import android.graphics.ColorMatrix
+import android.graphics.ColorMatrixColorFilter
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalContext
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.EncodeHintType
 import com.google.zxing.qrcode.QRCodeWriter
@@ -39,6 +47,7 @@ import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneOffset
+import com.hv.bukutm.R
 import java.time.format.DateTimeFormatter
 import java.util.*
 
@@ -64,6 +73,70 @@ fun generateQrCodeBitmap(data: String?, width: Int, height: Int): Bitmap? {
     }
 }
 
+fun generateQrCodeWithLogo(context: Context, data: String?, width: Int, height: Int, logoResId: Int): Bitmap? {
+    val qrBitmap = generateQrCodeBitmap(data, width, height)
+    if (qrBitmap == null) return null
+
+    return try {
+        // Load logo from drawable resource
+        val logoBitmap = BitmapFactory.decodeResource(context.resources, logoResId)
+        if (logoBitmap == null) {
+            return qrBitmap // Return QR code without logo if logo fails to load
+        }
+
+        // Calculate logo size (reduced from 1/5 to 1/6 of QR code size)
+        val logoWidth = width / 7
+        val logoHeight = height / 7
+        val scaledLogo = Bitmap.createScaledBitmap(logoBitmap, logoWidth, logoHeight, true)
+
+        // Convert logo to grayscale
+        val grayLogo = convertToGrayscale(scaledLogo)
+
+        // Create a new bitmap with the same size as QR code
+        val combinedBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(combinedBitmap)
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+
+        // Draw QR code as the background
+        canvas.drawBitmap(qrBitmap, 0f, 0f, paint)
+
+        // Calculate center position for logo
+        val x = (width - logoWidth) / 2f
+        val y = (height - logoHeight) / 2f
+
+        // Draw grayscale logo on top of QR code
+        canvas.drawBitmap(grayLogo, x, y, paint)
+
+        // Ensure QR code remains scannable
+        combinedBitmap
+    } catch (e: Exception) {
+        e.printStackTrace()
+        null
+    }
+}
+
+private fun convertToGrayscale(bitmap: Bitmap): Bitmap {
+    val width = bitmap.width
+    val height = bitmap.height
+    val grayBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+
+    val canvas = Canvas(grayBitmap)
+    val paint = Paint()
+
+    // Create ColorMatrix for grayscale conversion
+    val colorMatrix = ColorMatrix()
+    colorMatrix.setSaturation(0f) // 0 = grayscale, 1 = original color
+
+    // Apply the color matrix to the paint
+    val colorFilter = ColorMatrixColorFilter(colorMatrix)
+    paint.colorFilter = colorFilter
+
+    // Draw the bitmap with grayscale filter
+    canvas.drawBitmap(bitmap, 0f, 0f, paint)
+
+    return grayBitmap
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddAppointmentScreen(
@@ -78,8 +151,9 @@ fun AddAppointmentScreen(
     val showTimePicker by viewModel.showTimePicker.collectAsState()
     val dateDialogError by viewModel.dateDialogError.collectAsState()
     val timeDialogError by viewModel.timeDialogError.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
 
-    // Check if selected date is today
+    // check user select this day
     val isSelectedDateToday = remember(uiState.date) {
         if (uiState.date.isNotBlank()) {
             try {
@@ -93,13 +167,10 @@ fun AddAppointmentScreen(
         }
     }
 
-    // Check if date is selected
     val isDateSelected = uiState.date.isNotBlank()
 
-    // Get current time
     val currentTime = remember { LocalTime.now() }
 
-    // Enhanced logic for time field availability
     val isTimeFieldAvailable = remember(uiState.date, currentTime) {
         when {
             !isDateSelected -> false
@@ -129,16 +200,40 @@ fun AddAppointmentScreen(
     val timePickerState = rememberTimePickerState()
 
     val showQrDialog = remember { mutableStateOf(false) }
+    val context = LocalContext.current
     val qrBitmap = remember(uiState.kodeQr) {
-        generateQrCodeBitmap(uiState.kodeQr, 350, 350)?.asImageBitmap()
+        generateQrCodeWithLogo(
+            context = context,
+            data = uiState.kodeQr,
+            width = 350,
+            height = 350,
+            logoResId = R.drawable.logo
+        )?.asImageBitmap()
     }
     val qrBitmapForSend = remember(uiState.kodeQr) {
-        generateQrCodeBitmap(uiState.kodeQr, 350, 350)
+        generateQrCodeWithLogo(
+            context = context,
+            data = uiState.kodeQr,
+            width = 350,
+            height = 350,
+            logoResId = R.drawable.logo
+        )
     }
 
     LaunchedEffect(uiState.kodeQr) {
         if (!uiState.kodeQr.isNullOrEmpty()) {
             showQrDialog.value = true
+        }
+    }
+
+    //snackbar
+    LaunchedEffect(uiState.snackbarMessage) {
+        uiState.snackbarMessage?.let { message ->
+            snackbarHostState.showSnackbar(
+                message = message,
+                duration = SnackbarDuration.Short
+            )
+            viewModel.clearSnackbarMessage()
         }
     }
 
@@ -148,11 +243,6 @@ fun AddAppointmentScreen(
                 title = {
                     Text(
                         "Buat Janji Temu",
-                        style = MaterialTheme.typography.headlineSmall.copy(
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 22.sp
-                        ),
-                        color = MaterialTheme.colorScheme.primary
                     )
                 },
                 navigationIcon = {
@@ -160,17 +250,28 @@ fun AddAppointmentScreen(
                         Icon(
                             imageVector = Icons.Default.ArrowBack,
                             contentDescription = "Kembali",
-                            tint = MaterialTheme.colorScheme.primary
                         )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    titleContentColor = MaterialTheme.colorScheme.primary,
-                    navigationIconContentColor = MaterialTheme.colorScheme.primary
-                ),
-                modifier = Modifier.shadow(4.dp)
             )
+        },
+        snackbarHost = {
+            SnackbarHost(
+                hostState = snackbarHostState,
+                modifier = Modifier
+                    .padding(16.dp)
+                    .fillMaxWidth()
+            ) { data ->
+                Snackbar(
+                    snackbarData = data,
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .wrapContentHeight()
+                )
+            }
         },
         contentWindowInsets = WindowInsets(0, 0, 0, 0)
     ) { innerPadding ->
@@ -229,7 +330,7 @@ fun AddAppointmentScreen(
                     OutlinedTextField(
                         value = uiState.phone,
                         onValueChange = { viewModel.updatePhone(it) },
-                        label = { Text("Nomor Telepon") },
+                        label = { Text("Nomor Telepon (08xxxxxxxxxx)") },
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(12.dp)),
@@ -317,31 +418,6 @@ fun AddAppointmentScreen(
                             else
                                 MaterialTheme.colorScheme.outline.copy(alpha = 0.38f)
                         ),
-                        isError = uiState.timeError != null,
-                        supportingText = {
-                            when {
-                                !isDateSelected -> Text(
-                                    "Pilih tanggal terlebih dahulu",
-                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                                    style = MaterialTheme.typography.bodySmall
-                                )
-                                isSelectedDateToday && currentTime.hour >= 14 -> Text(
-                                    "Waktu sudah tidak tersedia untuk hari ini (lewat jam 14:00)",
-                                    color = MaterialTheme.colorScheme.error,
-                                    style = MaterialTheme.typography.bodySmall
-                                )
-                                isSelectedDateToday && !isTimeFieldAvailable -> Text(
-                                    "Tidak ada waktu yang tersedia pada hari ini",
-                                    color = MaterialTheme.colorScheme.error,
-                                    style = MaterialTheme.typography.bodySmall
-                                )
-                                uiState.timeError != null -> Text(
-                                    uiState.timeError!!,
-                                    color = MaterialTheme.colorScheme.error,
-                                    style = MaterialTheme.typography.bodySmall
-                                )
-                            }
-                        }
                     )
 
                     OutlinedTextField(
@@ -575,7 +651,7 @@ fun AddAppointmentScreen(
                                 color = MaterialTheme.colorScheme.primary
                             )
                             Text(
-                                "Mohon simpan kode QR ini dengan mengambil screenshot atau kirim ke WhatsApp Anda.",
+                                "Mohon simpan kode QR ini dengan mengambil screenshot atau kirim ke nomor WhatsApp tamu secara otomatis",
                                 style = MaterialTheme.typography.bodyLarge,
                                 textAlign = TextAlign.Center,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -603,6 +679,7 @@ fun AddAppointmentScreen(
                                     .fillMaxWidth()
                                     .height(48.dp)
                                     .clip(RoundedCornerShape(12.dp)),
+                                enabled = !uiState.isQrSent, // Nonaktifkan jika sudah dikirim
                                 colors = ButtonDefaults.buttonColors(
                                     containerColor = MaterialTheme.colorScheme.secondary,
                                     contentColor = MaterialTheme.colorScheme.onSecondary

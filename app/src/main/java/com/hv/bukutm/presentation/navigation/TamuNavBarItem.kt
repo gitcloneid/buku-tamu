@@ -18,9 +18,9 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 
 @Composable
-fun TamuNavBar(
+fun TamuNavBarItem(
     navController: NavController,
-    items: List<TamuItem>,
+    items: List<Login_Tamu>,
     modifier: Modifier = Modifier
 ) {
     NavigationBar(
@@ -39,9 +39,9 @@ fun TamuNavBar(
                         modifier = Modifier
                             .size(
                                 when (item) {
-                                    TamuItem.Dashboard_Tamu -> 24.dp
-                                    TamuItem.Qr_Tamu -> 24.dp
-                                    TamuItem.Profile_Tamu -> 24.dp
+                                    Login_Tamu.Dashboard_Tamu -> 24.dp
+                                    Login_Tamu.History_Tamu -> 24.dp
+                                    Login_Tamu.Profile_Tamu -> 24.dp   // Larger to compensate for smaller intrinsic size
                                     else -> 24.dp
                                 }
                             )
@@ -50,6 +50,7 @@ fun TamuNavBar(
                 },
                 selected = currentRoute == item.route,
                 onClick = {
+                    Log.d("BottomNavBar", "Navigating to: ${item.route}")
                     navController.navigate(item.route) {
                         popUpTo(navController.graph.startDestinationId) {
                             saveState = true
@@ -63,7 +64,7 @@ fun TamuNavBar(
                     unselectedIconColor = MaterialTheme.colorScheme.onSurface,
                     indicatorColor = Color.Transparent
                 ),
-                interactionSource = remember { MutableInteractionSource() } // Provide an empty interaction source
+                interactionSource = remember { MutableInteractionSource() }
             )
         }
     }

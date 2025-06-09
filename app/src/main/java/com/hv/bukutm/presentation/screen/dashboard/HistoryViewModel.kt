@@ -17,7 +17,8 @@ import javax.inject.Inject
 data class HistoryUiState(
     val appointments: List<Appointment> = emptyList(),
     val isLoading: Boolean = false,
-    val error: String? = null
+    val error: String? = null,
+    val selectedLastMonths: Int? = 6 // Default to 6 months
 )
 
 @HiltViewModel
@@ -29,15 +30,25 @@ class HistoryViewModel @Inject constructor(
     val uiState: StateFlow<HistoryUiState> = _uiState.asStateFlow()
 
     init {
-        fetchCompletedAppointments()
+        fetchCompletedAppointments(6) // Default fetch with 6 months
     }
 
-    private fun fetchCompletedAppointments() {
+    fun setLastMonthsFilter(lastMonths: Int?) {
+        _uiState.update { it.copy(selectedLastMonths = lastMonths) }
+        fetchCompletedAppointments(lastMonths)
+    }
+
+    private fun fetchCompletedAppointments(lastMonths: Int? = null) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             val token = tokenManager.accessToken.firstOrNull()
             if (token != null) {
-                val result = appointmentRepository.getCompletedAppointments(token, page = 1, limit = 10)
+                val result = appointmentRepository.getCompletedAppointments(
+                    token,
+                    page = 1,
+                    limit = 10000,
+                    lastMonths = lastMonths // Pass the filter
+                )
                 result.fold(
                     onSuccess = { appointments ->
                         _uiState.update { it.copy(appointments = appointments, isLoading = false, error = null) }

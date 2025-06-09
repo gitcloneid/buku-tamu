@@ -25,15 +25,7 @@ fun BottomNavBar(
 ) {
     NavigationBar(
         modifier = modifier
-            .clip(
-                RoundedCornerShape(
-                    topStart = 16.dp,
-                    topEnd = 16.dp,
-                    bottomStart = 0.dp,
-                    bottomEnd = 0.dp
-                )
-            )
-            .height(65.dp),
+            .height(80.dp),
         containerColor = MaterialTheme.colorScheme.surface,
         tonalElevation = 0.dp
     ) {
@@ -47,14 +39,14 @@ fun BottomNavBar(
                         modifier = Modifier
                             .size(
                                 when (item) {
-                                    NavBarItem.Dashboard_Guru -> 28.dp
-                                    NavBarItem.Tanggal_Guru -> 28.dp
-                                    NavBarItem.Notifikasi_Guru -> 28.dp // Larger to compensate for smaller intrinsic size
-                                    NavBarItem.Profile_Guru -> 28.dp   // Larger to compensate for smaller intrinsic size
-                                    else -> 28.dp
+                                    NavBarItem.Dashboard_Guru -> 24.dp
+                                    NavBarItem.Tanggal_Guru -> 24.dp
+                                    NavBarItem.Notifikasi_Guru -> 24.dp // Larger to compensate for smaller intrinsic size
+                                    NavBarItem.Profile_Guru -> 24.dp   // Larger to compensate for smaller intrinsic size
+                                    else -> 24.dp
                                 }
                             )
-                            .padding(2.dp)
+                            .padding(1.dp)
                     )
                 },
                 selected = currentRoute == item.route,

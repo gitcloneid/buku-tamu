@@ -20,8 +20,8 @@ import java.io.ByteArrayOutputStream
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
-import javax.inject.Inject
 import java.util.Locale
+import javax.inject.Inject
 
 data class AddAppointmentUiState(
     val name: String = "",
@@ -40,7 +40,9 @@ data class AddAppointmentUiState(
     val showTimePicker: Boolean = false,
     val timeDialogError: String? = null,
     val dateDialogError: String? = null,
-    val kodeQr: String? = null
+    val kodeQr: String? = null,
+    val snackbarMessage: String? = null,
+    val isQrSent: Boolean = false // Tambahan untuk melacak status pengiriman QR
 )
 
 @HiltViewModel
@@ -299,6 +301,9 @@ class AddAppointmentViewModel @Inject constructor(
         _timeDialogError.value = message
     }
 
+    fun clearSnackbarMessage() {
+        _uiState.update { it.copy(snackbarMessage = null) }
+    }
 
     fun sendQrToWhatsApp(bitmap: Bitmap, phoneNumber: String) {
         viewModelScope.launch {
@@ -314,7 +319,7 @@ class AddAppointmentViewModel @Inject constructor(
 
                 // Validate Base64 string
                 if (!base64Image.matches(Regex("^[A-Za-z0-9+/=]+$"))) {
-                    _uiState.update { it.copy(error = "Base64 string contains invalid characters") }
+                    _uiState.update { it.copy(snackbarMessage = "Base64 string contains invalid characters") }
                     Log.e("ViewModel", "Invalid Base64 string: $base64Image")
                     return@launch
                 }
@@ -334,25 +339,36 @@ class AddAppointmentViewModel @Inject constructor(
                     _uiState.value.date // Fallback to original format
                 }
 
+                // Modified WhatsApp message
+                val caption = """
+                    Kode QR Janji Temu
+                    Nama: ${_uiState.value.name}
+                    Tanggal: $formattedDate
+                    Waktu: ${_uiState.value.time}
+                    Kode: *${_uiState.value.kodeQr}*
+                    Silakan tunjukkan QR code ini saat kedatangan.
+                    Untuk memeriksa status, gunakan aplikasi Buku Tamu SMKN 2 Singosari.
+                """.trimIndent()
+
                 // Send to WhatsApp API
                 val response = whatsAppApi.sendMedia(
                     WhatsAppMediaRequest(
                         to = normalizedPhone,
                         mediaBase64 = base64Image,
                         filename = "appointment_qr.png",
-                        caption = "Kode QR untuk janji temu Anda: ${_uiState.value.name}, $formattedDate ${_uiState.value.time}"
+                        caption = caption
                     )
                 )
 
                 if (response.status == "media_sent") {
-                    _uiState.update { it.copy(error = null) }
+                    _uiState.update { it.copy(snackbarMessage = "Kode QR berhasil dikirim ke WhatsApp", isQrSent = true) }
                     Log.d("ViewModel", "QR code sent successfully to $normalizedPhone")
                 } else {
-                    _uiState.update { it.copy(error = "Gagal mengirim QR: ${response.status}") }
+                    _uiState.update { it.copy(snackbarMessage = "Gagal mengirim QR ke WhatsApp: ${response.status}") }
                     Log.e("ViewModel", "Failed to send QR code: ${response.status}")
                 }
             } catch (e: Exception) {
-                _uiState.update { it.copy(error = "Error mengirim QR: ${e.message}") }
+                _uiState.update { it.copy(snackbarMessage = "Error mengirim QR ke WhatsApp: ${e.message}") }
                 Log.e("ViewModel", "Error sending QR code: ${e.message}")
             }
         }

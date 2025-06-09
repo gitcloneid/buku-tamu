@@ -14,5 +14,13 @@ data class Appointment(
 data class Tamu(
     val idTamu: Int,
     val nama: String,
-    val telepon: String
+    val telepon: String,
+    val kodeQr: String? = null
+)
+
+data class Guru(
+    val idPengguna: Int,
+    val nama: String,
+    val email: String?,
+    val role: String?
 )

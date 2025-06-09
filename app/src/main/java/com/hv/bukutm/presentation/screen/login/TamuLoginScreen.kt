@@ -7,11 +7,11 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.ClickableText
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.focusModifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
@@ -20,8 +20,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
@@ -34,46 +33,36 @@ import com.hv.bukutm.R
 import com.hv.bukutm.ui.theme.BukuTMTheme
 
 @Composable
-fun LoginScreen(
+fun TamuLoginScreen(
     navController: NavController,
-    viewModel: LoginViewModel = hiltViewModel()
+    viewModel: TamuLoginViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsState()
 
-    LaunchedEffect(state.user) {
-        when (state.user?.role) {
-            "Admin" -> navController.navigate("admin_home") {
-                popUpTo("login") { inclusive = true }
-            }
-            "Guru" -> navController.navigate("teacher_home") {
-                popUpTo("login") { inclusive = true }
-            }
-            "Penerima Tamu" -> navController.navigate("home_penerima_tamu") {
-                popUpTo("login") { inclusive = true }
+    LaunchedEffect(state.tamu) {
+        if (state.tamu != null) {
+            navController.navigate("home_tamu") {
+                popUpTo("tamu_login") { inclusive = true }
             }
         }
     }
 
-    LoginScreenContent(
+    TamuLoginScreenContent(
         state = state,
-        onLoginClick = { email, password ->
-            viewModel.login(email, password)
+        onLoginClick = { qrCode ->
+            viewModel.loginWithQrCode(qrCode)
         },
-        navcontroller = navController,
+        navController = navController
     )
 }
 
 @Composable
-fun LoginScreenContent(
-    state: LoginUiState,
-    navcontroller: NavController,
-    onLoginClick: (String, String) -> Unit
+fun TamuLoginScreenContent(
+    state: TamuLoginUiState,
+    onLoginClick: (String) -> Unit,
+    navController: NavController
 ) {
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var isPasswordVisible by remember { mutableStateOf(false) }
-
-
+    var qrCode by remember { mutableStateOf("") }
     val configuration = LocalConfiguration.current
     val screenHeight = configuration.screenHeightDp.dp
     val screenWidth = configuration.screenWidthDp.dp
@@ -113,21 +102,18 @@ fun LoginScreenContent(
                     color = Color(0xFFF7F5F5),
                     fontSize = 25.sp,
                     fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(top = 185.dp) 
+                    modifier = Modifier.padding(top = 185.dp)
                 )
             }
 
-            //form top padding
-            val topPadding = 120.dp
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = topPadding),
+                    .padding(top = 120.dp),
                 horizontalAlignment = Alignment.Start
             ) {
-                // Login Buku Tamu text
                 Text(
-                    text = "Masuk Buku Tamu",
+                    text = "Masuk Sebagai Tamu",
                     style = MaterialTheme.typography.headlineMedium,
                     color = Color(0xFF2196F3),
                     fontSize = 25.sp,
@@ -135,22 +121,20 @@ fun LoginScreenContent(
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
 
-                // Email field label
                 Text(
-                    text = "Email",
+                    text = "Kode",
                     fontSize = 17.sp,
                     style = MaterialTheme.typography.bodyLarge,
                     color = Color(0xFF2196F3),
                     modifier = Modifier.padding(start = 4.dp, bottom = 4.dp)
                 )
 
-                // Email field
                 OutlinedTextField(
-                    value = email,
-                    onValueChange = { email = it },
+                    value = qrCode,
+                    onValueChange = { qrCode = it },
                     placeholder = {
                         Text(
-                            "Masukkan Email",
+                            "Masukkan Kode (Dikirim Dari Whatsapp)",
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                         )
                     },
@@ -173,57 +157,8 @@ fun LoginScreenContent(
                     textStyle = LocalTextStyle.current.copy(
                         color = if (isSystemInDarkTheme()) Color.White else Color.Black
                     ),
-                    singleLine = true
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Password field label
-                Text(
-                    text = "Kata Sandi",
-                    fontSize = 17.sp,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Color(0xFF2196F3),
-                    modifier = Modifier.padding(start = 4.dp, bottom = 4.dp)
-                )
-
-                // Password field
-                OutlinedTextField(
-                    value = password,
-                    onValueChange = { password = it },
-                    placeholder = { Text("Masukkan Kata Sandi") },
-                    visualTransformation = if (isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(Color.White, RoundedCornerShape(8.dp)),
-                    shape = RoundedCornerShape(8.dp),
-                    trailingIcon = {
-                        val icon = if (isPasswordVisible) {
-                            painterResource(id = R.drawable.eye_open_svgrepo_com) // Ganti dengan ikon mata terbuka
-                        } else {
-                            painterResource(id = R.drawable.eye_closed_svgrepo_com) // Ganti dengan ikon mata tertutup
-                        }
-                        IconButton(onClick = { isPasswordVisible = !isPasswordVisible }) {
-                            Icon(
-                                painter = icon,
-                                contentDescription = if (isPasswordVisible) "Hide password" else "Show password",
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
-                    },
-                    colors = OutlinedTextFieldDefaults.colors(
-                        unfocusedBorderColor = if (isSystemInDarkTheme()) Color(0xFF616161) else Color.LightGray,
-                        focusedBorderColor = Color(0xFF2196F3),
-                        cursorColor = Color(0xFF2196F3),
-                        focusedTextColor = if (isSystemInDarkTheme()) Color.White else Color.Black,
-                        unfocusedTextColor = if (isSystemInDarkTheme()) Color.White.copy(alpha = 0.9f) else Color.Black.copy(alpha = 0.9f),
-                        focusedContainerColor = if (isSystemInDarkTheme()) Color(0xFF2B2B2B) else Color.White,
-                        unfocusedContainerColor = if (isSystemInDarkTheme()) Color(0xFF2B2B2B) else Color.White,
-                    ),
-                    textStyle = LocalTextStyle.current.copy(
-                        color = if (isSystemInDarkTheme()) Color.White else Color.Black
-                    ),
-                    singleLine = true
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text)
                 )
 
                 Box(
@@ -241,13 +176,14 @@ fun LoginScreenContent(
                                     fontSize = 14.sp,
                                     textDecoration = TextDecoration.Underline
                                 )
-                            ) { append("Masuk Sebagai Tamu") }
+                            ) { append("Masuk Sebagai Pengguna") }
                         },
-                        onClick = {navcontroller.navigate("tamu_login")}
+                        onClick = {
+                            navController.navigate("login")
+                        }
                     )
                 }
             }
-
 
             val buttonBottomPadding = 90.dp
             val buttonVerticalOffset = 0.dp
@@ -263,9 +199,8 @@ fun LoginScreenContent(
                     modifier = Modifier
                         .padding(bottom = buttonBottomPadding)
                 ) {
-                    // Login button
                     OutlinedButton(
-                        onClick = { onLoginClick(email, password) },
+                        onClick = { onLoginClick(qrCode) },
                         modifier = Modifier
                             .height(50.dp)
                             .width(110.dp)
@@ -282,7 +217,7 @@ fun LoginScreenContent(
                         )
                     }
                 }
-                // Error message (if exists)
+
                 if (state.error != null) {
                     Text(
                         text = state.error ?: "Unknown error",
@@ -305,12 +240,12 @@ fun LoginScreenContent(
 
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
-fun LoginScreenPreview() {
+fun TamuLoginScreenPreview() {
     BukuTMTheme {
-        LoginScreenContent(
-            state = LoginUiState(),
-            onLoginClick = { _, _ -> },
-            navcontroller = NavController(LocalContext.current),
+        TamuLoginScreenContent(
+            state = TamuLoginUiState(),
+            onLoginClick = { _ -> },
+            navController = rememberNavController()
         )
     }
 }

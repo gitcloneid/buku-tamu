@@ -30,9 +30,10 @@ interface AppointmentApi {
     @GET("api/appointments")
     suspend fun getCompletedAppointments(
         @Header("Authorization") authToken: String,
-        @Query("status") status: String = "Selesai",
+        @Query("status") status: String = "Selesai,Telat",
         @Query("page") page: Int = 1,
-        @Query("limit") limit: Int = 10
+        @Query("limit") limit: Int = 10000000,
+        @Query("lastMonths") lastMonths: Int? = null
     ): CompletedAppointmentsResponse
 
     @GET("api/appointments")
@@ -40,7 +41,7 @@ interface AppointmentApi {
         @Header("Authorization") authToken: String,
         @Query("status") status: String = "Menunggu",
         @Query("page") page: Int = 1,
-        @Query("limit") limit: Int = 100
+        @Query("limit") limit: Int = 1000000
     ): PendingAppointmentResponse
 
     @GET("api/appointments/qr/{kodeQr}")
@@ -57,7 +58,32 @@ interface AppointmentApi {
         @Path("id") id: Int,
         @Body status: String
     ): Appointment
+
+    @GET("api/tamu/qr/{kodeQr}")
+    suspend fun getTamuByQr(
+        @Path("kodeQr") kodeQr: String
+    ): Appointment
+
+    @PUT("api/appointments/{id}/reschedule")
+    suspend fun rescheduleAppointment(
+        @Header("Authorization") token: String,
+        @Path("id") id: Int,
+        @Body request: RescheduleAppointmentRequest
+    ): Appointment
+
+    @GET("api/tamu/filter")
+    suspend fun getTamuHistory(
+        @Header("Authorization") authToken: String? = null,
+        @Query("status") status: String = "Telat,Selesai",
+        @Query("lastmonth") lastmonth: Int? = null,
+        @Query("phoneNumber") phoneNumber: String? = null
+    ): List<AppointmentResponse>
 }
+
+data class RescheduleAppointmentRequest(
+    val tanggal: String,
+    val waktu: String
+)
 
 data class CompletedAppointmentsResponse(
     val total: Int,

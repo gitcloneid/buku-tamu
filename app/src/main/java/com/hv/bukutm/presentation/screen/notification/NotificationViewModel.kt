@@ -70,6 +70,7 @@
             viewModelScope.launch {
                 tokenManager.accessToken.firstOrNull()?.let {  token ->
                     try {
+                        //ws://api-sub.clowlaw.my.id/api/ws
                         webSocketService.connect("ws://api-sub.clowlaw.my.id/api/ws", token)
                             .collectLatest { message ->
                                 message?.let {

@@ -16,7 +16,8 @@ interface AppointmentRepository {
     suspend fun getCompletedAppointments(
         token: String,
         page: Int = 1,
-        limit: Int = 10
+        limit: Int = 10,
+        lastMonths: Int? = null // New parameter
     ): Result<List<Appointment>>
     suspend fun getPendingAppointments(
         token: String,
@@ -24,5 +25,17 @@ interface AppointmentRepository {
         limit: Int = 1000000000
     ): Result<List<Appointment>>
     suspend fun getAppointmentByQr(token: String, kodeQr: String): Result<Appointment>
+    suspend fun getTamuByQr(token: String? = null, kodeQr: String): Result<Appointment>
     suspend fun updateAppointmentStatus(token: String, id: Int, status: String): Result<Appointment>
+    suspend fun rescheduleAppointment(
+        token: String,
+        id: Int,
+        tanggal: String,
+        waktu: String
+    ): Result<Appointment>
+    suspend fun getTamuHistory(
+        token: String,
+        lastmonth: Int? = null,
+        phoneNumber: String? = null
+    ): Result<List<Appointment>>
 }
