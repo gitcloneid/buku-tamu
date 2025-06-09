@@ -1,12 +1,15 @@
 package com.hv.bukutm
 
+import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.hv.bukutm.data.TokenManager
 import com.hv.bukutm.domain.repository.AuthRepository
 import com.hv.bukutm.utils.JwtUtils
+import com.hv.bukutm.utils.NetworkUtils
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -23,30 +26,36 @@ sealed interface AuthState {
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val tokenManager: TokenManager,
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    @ApplicationContext private val context: Context
 ) : ViewModel() {
 
     private val _authState = MutableStateFlow<AuthState>(AuthState.Loading)
     val authState: StateFlow<AuthState> = _authState.asStateFlow()
 
-    // Expose tokenManager so it can be passed to the NavGraph from MainActivity
+    private val _showNoInternetDialog = MutableStateFlow(false)
+    val showNoInternetDialog: StateFlow<Boolean> = _showNoInternetDialog.asStateFlow()
+
     val publicTokenManager: TokenManager = tokenManager
 
     init {
         viewModelScope.launch {
             val refreshToken = tokenManager.refreshToken.firstOrNull()
             if (refreshToken != null) {
-                // A refresh token exists, so we attempt to refresh the session.
-                Log.d("MainViewModel", "Refresh token found. Attempting to refresh.")
-                performTokenRefresh(refreshToken)
+                if (NetworkUtils.isInternetAvailable(context)) {
+                    Log.d("MainViewModel", "Refresh token found. Attempting to refresh.")
+                    performTokenRefresh(refreshToken)
+                } else {
+                    Log.d("MainViewModel", "No internet connection. Showing dialog.")
+                    _showNoInternetDialog.value = true
+                    // Don't change authState, keep it as Loading until user retries
+                }
             } else {
-                // If there's no refresh token, check for a guest (Tamu) session.
                 val tamu = tokenManager.tamu.firstOrNull()
                 if (tamu != null) {
                     Log.d("MainViewModel", "Tamu session found.")
                     _authState.value = AuthState.Authenticated("Tamu")
                 } else {
-                    // No session found, user is unauthenticated.
                     Log.d("MainViewModel", "No tokens or Tamu session found. User is unauthenticated.")
                     _authState.value = AuthState.Unauthenticated
                 }
@@ -54,9 +63,29 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Performs the token refresh and updates the authState based on the result.
-     */
+    fun retryAuthCheck() {
+        viewModelScope.launch {
+            _showNoInternetDialog.value = false
+            _authState.value = AuthState.Loading
+
+            val refreshToken = tokenManager.refreshToken.firstOrNull()
+            if (refreshToken != null) {
+                if (NetworkUtils.isInternetAvailable(context)) {
+                    performTokenRefresh(refreshToken)
+                } else {
+                    _showNoInternetDialog.value = true
+                }
+            } else {
+                val tamu = tokenManager.tamu.firstOrNull()
+                if (tamu != null) {
+                    _authState.value = AuthState.Authenticated("Tamu")
+                } else {
+                    _authState.value = AuthState.Unauthenticated
+                }
+            }
+        }
+    }
+
     private fun performTokenRefresh(refreshToken: String) {
         viewModelScope.launch {
             authRepository.refreshToken(refreshToken).fold(
@@ -65,21 +94,15 @@ class MainViewModel @Inject constructor(
                     tokenManager.saveTokens(accessToken, newRefreshToken)
 
                     val role = JwtUtils.getRoleFromToken(accessToken)
-
-                    // **FIX**: Check if the role is valid (not null) before setting the state.
-                    // This prevents the "Type Mismatch" error.
                     if (role != null) {
                         _authState.value = AuthState.Authenticated(role)
                     } else {
-                        // If the token is valid but doesn't contain a role,
-                        // treat the user as unauthenticated.
                         Log.e("MainViewModel", "Role not found in token. Clearing session.")
                         tokenManager.clearTokens()
                         _authState.value = AuthState.Unauthenticated
                     }
                 },
                 onFailure = { error ->
-                    // If the refresh call fails, the token is likely expired or invalid.
                     Log.e("MainViewModel", "Refresh Failed: ${error.message}")
                     tokenManager.clearTokens()
                     _authState.value = AuthState.Unauthenticated

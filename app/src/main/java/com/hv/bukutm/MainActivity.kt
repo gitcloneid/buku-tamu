@@ -9,8 +9,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -36,6 +39,22 @@ class MainActivity : ComponentActivity() {
                     val navController = rememberNavController()
                     val viewModel: MainViewModel = hiltViewModel()
                     val authState by viewModel.authState.collectAsStateWithLifecycle()
+                    val showNoInternetDialog by viewModel.showNoInternetDialog.collectAsStateWithLifecycle()
+
+                    if (showNoInternetDialog) {
+                        AlertDialog(
+                            onDismissRequest = { /* Dialog can't be dismissed without retrying */ },
+                            title = { Text("Tidak Ada Koneksi Internet") },
+                            text = { Text("Tidak ada internet yang tersambung. Silahkan coba lagi.") },
+                            confirmButton = {
+                                Button(
+                                    onClick = { viewModel.retryAuthCheck() }
+                                ) {
+                                    Text("Coba Lagi")
+                                }
+                            }
+                        )
+                    }
 
                     // The main navigation logic for the app.
                     Box(modifier = Modifier.padding(innerPadding)) {
